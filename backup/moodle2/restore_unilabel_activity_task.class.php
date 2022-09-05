@@ -53,6 +53,7 @@ class restore_unilabel_activity_task extends restore_activity_task {
         $this->add_step(new restore_unilabel_activity_structure_step('unilabel_structure', 'unilabel.xml'));
     }
 
+
     /**
      * Define the contents in the activity that must be
      * processed by the link decoder
@@ -62,6 +63,18 @@ class restore_unilabel_activity_task extends restore_activity_task {
 
         $contents[] = new restore_decode_content('unilabel', array('intro'), 'unilabel');
 
+        // Get the decode contents of the subplugins.
+        $plugins = \core_component::get_plugin_list('unilabeltype');
+        foreach ($plugins as $plugin => $pluginpath) {
+            $restoreclasspath = $pluginpath.'/backup/moodle2/restore_unilabeltype_'.$plugin.'_subplugin.class.php';
+            $restoreclass = 'restore_unilabeltype_'.$plugin.'_subplugin';
+            if (is_file($restoreclasspath)) {
+                require_once($restoreclasspath);
+                if (method_exists($restoreclass, 'define_decode_contents')) {
+                    $contents = array_merge($contents, $restoreclass::define_decode_contents());
+                }
+            }
+        }
         return $contents;
     }
 
